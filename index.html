@@ -1,0 +1,412 @@
+<!doctype html>
+<html lang="fa" dir="rtl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#0e1a22">
+<title>چارت‌های من</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Vazirmatn:wght@400;600;800&display=swap" rel="stylesheet">
+<script src="https://unpkg.com/lightweight-charts@4.2.0/dist/lightweight-charts.standalone.production.js"></script>
+<style>
+  :root{
+    --bg:#0e1a22;
+    --panel:#14232e;
+    --line:#223543;
+    --text:#dbe6ec;
+    --dim:#7f95a3;
+    --up:#37b8a0;
+    --down:#e8685a;
+    --amber:#f0b44c;
+    --r:8px;
+  }
+  *{box-sizing:border-box}
+  html,body{height:100%;margin:0;background:var(--bg);color:var(--text);
+    font-family:'Vazirmatn',system-ui,-apple-system,'Segoe UI',sans-serif;font-size:15px}
+  button{font:inherit;color:inherit;background:none;border:0;cursor:pointer;padding:0}
+  :focus-visible{outline:2px solid var(--amber);outline-offset:2px}
+  .num{direction:ltr;unicode-bidi:isolate;display:inline-block;font-variant-numeric:tabular-nums}
+  .up{color:var(--up)} .down{color:var(--down)}
+
+  .app{height:100dvh;display:grid;grid-template-rows:auto minmax(0,1fr)}
+
+  /* Symbol list: horizontal strip on phones */
+  .watch{background:var(--panel);border-bottom:1px solid var(--line);min-width:0}
+  .watch ul{list-style:none;margin:0;padding:8px;display:flex;gap:6px;overflow-x:auto;scrollbar-width:none}
+  .watch ul::-webkit-scrollbar{display:none}
+  .item{flex:0 0 auto;min-width:104px;display:grid;gap:1px;text-align:start;
+    padding:6px 10px;border:1px solid var(--line);border-radius:var(--r)}
+  .item .n{font-weight:600}
+  .item .n small{color:var(--dim);font-weight:400;margin-inline-start:2px}
+  .item .p{font-size:14px}
+  .item .c{font-size:12px;min-height:1.2em}
+  .item.on{border-color:var(--amber)}
+  .add{flex:0 0 auto;min-width:48px;border:1px dashed var(--line);border-radius:var(--r);
+    color:var(--dim);font-size:22px;padding:0 14px}
+  .watch-title{display:none}
+
+  main{display:flex;flex-direction:column;min-height:0;min-width:0}
+  .top{display:flex;align-items:flex-end;justify-content:space-between;gap:12px;padding:10px 14px 6px}
+  .sym{font-size:18px;font-weight:800}
+  .sym small{color:var(--dim);font-weight:400;font-size:13px;margin-inline-start:3px}
+  .price{font-size:26px;font-weight:600;line-height:1.1}
+  .chg{font-size:14px;margin-inline-start:8px}
+  .remove{color:var(--dim);font-size:13px;padding:6px 0}
+  .remove:hover{color:var(--down)}
+
+  .tfbar{display:flex;align-items:center;justify-content:space-between;gap:8px;padding:0 10px 6px}
+  .tfs{display:flex;gap:2px;overflow-x:auto;scrollbar-width:none}
+  .tfs button{padding:6px 10px;border-radius:6px;color:var(--dim);direction:ltr}
+  .tfs button.on{color:var(--amber);background:var(--panel)}
+  .status{display:flex;align-items:center;gap:6px;color:var(--dim);font-size:12px;white-space:nowrap}
+  .dot{width:8px;height:8px;border-radius:50%;background:var(--dim)}
+  .status.live .dot{background:var(--up)}
+  .status.err .dot{background:var(--down)}
+
+  .chartwrap{flex:1;min-height:0;position:relative;border-top:1px solid var(--line)}
+  #chart{position:absolute;inset:0;direction:ltr}
+
+  dialog{background:var(--panel);color:var(--text);border:1px solid var(--line);border-radius:var(--r);
+    padding:18px;width:min(92vw,360px)}
+  dialog::backdrop{background:rgba(5,10,14,.7)}
+  dialog h2{margin:0 0 4px;font-size:17px}
+  dialog p{margin:0 0 12px;color:var(--dim);font-size:13px}
+  dialog input{width:100%;padding:10px 12px;border-radius:var(--r);border:1px solid var(--line);
+    background:var(--bg);color:var(--text);font:inherit;direction:ltr;text-transform:uppercase}
+  .err-msg{min-height:1.4em;margin:8px 0 0;color:var(--down);font-size:13px}
+  .row{display:flex;gap:8px;margin-top:10px}
+  .row button{flex:1;padding:10px;border-radius:var(--r);border:1px solid var(--line)}
+  .row .go{background:var(--amber);color:#1a1405;border-color:var(--amber);font-weight:600}
+
+  /* Wide screens: list becomes a side column */
+  @media (min-width:900px){
+    .app{grid-template-columns:270px minmax(0,1fr);grid-template-rows:minmax(0,1fr)}
+    .watch{border-bottom:0;border-inline-end:1px solid var(--line);display:flex;flex-direction:column;min-height:0}
+    .watch-title{display:block;padding:14px 14px 4px;font-weight:800;font-size:16px}
+    .watch ul{flex-direction:column;overflow-x:hidden;overflow-y:auto;flex:1}
+    .item{min-width:0;grid-template-columns:1fr auto;align-items:center;gap:0 8px}
+    .item .n{grid-row:1 / span 2}
+    .item .p{text-align:end}
+    .item .c{text-align:end}
+    .add{min-height:44px}
+  }
+</style>
+</head>
+<body>
+<div class="app">
+  <aside class="watch" aria-label="لیست نمادها">
+    <div class="watch-title">نمادها</div>
+    <ul id="list"></ul>
+  </aside>
+
+  <main>
+    <div class="top">
+      <div>
+        <div class="sym" id="sym"></div>
+        <div>
+          <span class="price num" id="price">—</span>
+          <span class="chg num" id="chg"></span>
+        </div>
+      </div>
+      <button class="remove" id="remove">حذف از لیست</button>
+    </div>
+
+    <div class="tfbar">
+      <div class="tfs" id="tfs" role="group" aria-label="تایم‌فریم"></div>
+      <div class="status" id="status"><span class="dot"></span><span id="statusText">در حال اتصال</span></div>
+    </div>
+
+    <div class="chartwrap"><div id="chart"></div></div>
+  </main>
+</div>
+
+<dialog id="dlg">
+  <h2>افزودن نماد</h2>
+  <p>نماد جفت‌ارز را وارد کن، مثلاً SOLUSDT یا ETHBTC</p>
+  <input id="symInput" autocomplete="off" autocapitalize="characters" spellcheck="false" placeholder="SOLUSDT">
+  <div class="err-msg" id="addErr"></div>
+  <div class="row">
+    <button id="cancel" type="button">بستن</button>
+    <button id="confirm" type="button" class="go">افزودن</button>
+  </div>
+</dialog>
+
+<script>
+(() => {
+  // Binance public market-data endpoints (no API key needed)
+  const REST = 'https://data-api.binance.vision/api/v3';
+  const WS   = 'wss://data-stream.binance.vision';
+
+  const DEFAULT_SYMBOLS = ['BTCUSDT','ETHUSDT','SOLUSDT','BNBUSDT','XRPUSDT'];
+  const TFS = ['1m','5m','15m','1h','4h','1d'];
+
+  const C = {
+    bg:'#0e1a22', text:'#dbe6ec', grid:'#182a37', line:'#223543',
+    up:'#37b8a0', down:'#e8685a', upVol:'rgba(55,184,160,.35)', downVol:'rgba(232,104,90,.35)'
+  };
+
+  const $ = id => document.getElementById(id);
+
+  // ---------- state ----------
+  const store = {
+    get(k, d){ try { const v = localStorage.getItem(k); return v ? JSON.parse(v) : d; } catch { return d; } },
+    set(k, v){ try { localStorage.setItem(k, JSON.stringify(v)); } catch {} }
+  };
+  let symbols = store.get('symbols', DEFAULT_SYMBOLS);
+  if (!Array.isArray(symbols) || !symbols.length) symbols = DEFAULT_SYMBOLS.slice();
+  let tf = store.get('tf', '1h');
+  if (!TFS.includes(tf)) tf = '1h';
+  let current = store.get('current', symbols[0]);
+  if (!symbols.includes(current)) current = symbols[0];
+
+  const last = {};   // last price per symbol
+  const chg  = {};   // 24h change % per symbol
+
+  // ---------- helpers ----------
+  const QUOTES = /(USDT|USDC|FDUSD|BUSD|BTC|ETH|BNB|EUR|TRY)$/;
+  function split(s){
+    const m = s.match(QUOTES);
+    return m && m.index > 0 ? [s.slice(0, m.index), m[0]] : [s, ''];
+  }
+  function digitsFor(p){ return p >= 1000 ? 2 : p >= 1 ? 3 : p >= 0.01 ? 5 : 8; }
+  function fmt(p){
+    if (p == null || isNaN(p)) return '—';
+    const d = digitsFor(p);
+    return p.toLocaleString('en-US', { minimumFractionDigits: Math.min(2, d), maximumFractionDigits: d });
+  }
+  function fmtChg(c){
+    if (c == null || isNaN(c)) return '';
+    return (c >= 0 ? '+' : '') + c.toFixed(2) + '%';
+  }
+  const tzOffset = () => -new Date().getTimezoneOffset() * 60; // show candles in local time
+
+  // ---------- chart ----------
+  const chart = LightweightCharts.createChart($('chart'), {
+    autoSize: true,
+    layout: { background: { type: 'solid', color: C.bg }, textColor: C.text, fontFamily: 'Vazirmatn, system-ui, sans-serif' },
+    grid: { vertLines: { color: C.grid }, horzLines: { color: C.grid } },
+    rightPriceScale: { borderColor: C.line },
+    timeScale: { borderColor: C.line, timeVisible: true, secondsVisible: false },
+    crosshair: { mode: LightweightCharts.CrosshairMode.Normal }
+  });
+  const candles = chart.addCandlestickSeries({
+    upColor: C.up, downColor: C.down, borderVisible: false,
+    wickUpColor: C.up, wickDownColor: C.down
+  });
+  candles.priceScale().applyOptions({ scaleMargins: { top: 0.08, bottom: 0.25 } });
+  const volume = chart.addHistogramSeries({ priceFormat: { type: 'volume' }, priceScaleId: 'vol' });
+  chart.priceScale('vol').applyOptions({ scaleMargins: { top: 0.8, bottom: 0 } });
+
+  // ---------- UI: list ----------
+  function renderList(){
+    const ul = $('list');
+    ul.innerHTML = '';
+    for (const s of symbols){
+      const [b, q] = split(s);
+      const li = document.createElement('li');
+      li.style.display = 'contents';
+      const btn = document.createElement('button');
+      btn.className = 'item' + (s === current ? ' on' : '');
+      btn.dataset.s = s;
+      btn.innerHTML = `<span class="n">${b}<small>${q}</small></span><span class="p num">—</span><span class="c num"></span>`;
+      btn.addEventListener('click', () => select(s));
+      li.appendChild(btn);
+      ul.appendChild(li);
+      updateItem(s);
+    }
+    const add = document.createElement('button');
+    add.className = 'add';
+    add.textContent = '+';
+    add.setAttribute('aria-label', 'افزودن نماد');
+    add.addEventListener('click', openDialog);
+    ul.appendChild(add);
+  }
+  function updateItem(s){
+    const btn = document.querySelector(`.item[data-s="${s}"]`);
+    if (!btn) return;
+    btn.querySelector('.p').textContent = fmt(last[s]);
+    const c = btn.querySelector('.c');
+    c.textContent = fmtChg(chg[s]);
+    c.className = 'c num ' + (chg[s] >= 0 ? 'up' : 'down');
+  }
+  function renderHeader(){
+    const [b, q] = split(current);
+    $('sym').innerHTML = `${b}<small>${q}</small>`;
+    renderPrice();
+  }
+  function renderPrice(){
+    $('price').textContent = fmt(last[current]);
+    const c = $('chg');
+    c.textContent = fmtChg(chg[current]);
+    c.className = 'chg num ' + (chg[current] >= 0 ? 'up' : 'down');
+  }
+  function renderTfs(){
+    const box = $('tfs');
+    box.innerHTML = '';
+    for (const t of TFS){
+      const b = document.createElement('button');
+      b.textContent = t;
+      if (t === tf) b.className = 'on';
+      b.addEventListener('click', () => { tf = t; store.set('tf', tf); renderTfs(); loadChart(); });
+      box.appendChild(b);
+    }
+  }
+  function setStatus(text, kind){
+    $('statusText').textContent = text;
+    $('status').className = 'status ' + (kind || '');
+  }
+
+  // ---------- actions ----------
+  function select(s){
+    current = s;
+    store.set('current', s);
+    document.querySelectorAll('.item').forEach(el => el.classList.toggle('on', el.dataset.s === s));
+    const on = document.querySelector(`.item[data-s="${s}"]`);
+    if (on) on.scrollIntoView({ inline: 'center', block: 'nearest' });
+    renderHeader();
+    loadChart();
+  }
+
+  $('remove').addEventListener('click', () => {
+    if (symbols.length <= 1) { setStatus('حداقل یک نماد باید بماند', 'err'); return; }
+    symbols = symbols.filter(s => s !== current);
+    store.set('symbols', symbols);
+    current = symbols[0];
+    store.set('current', current);
+    renderList();
+    renderHeader();
+    openTickers();
+    loadChart();
+  });
+
+  // ---------- add-symbol dialog ----------
+  const dlg = $('dlg');
+  function openDialog(){
+    $('symInput').value = '';
+    $('addErr').textContent = '';
+    dlg.showModal();
+    $('symInput').focus();
+  }
+  $('cancel').addEventListener('click', () => dlg.close());
+  async function confirmAdd(){
+    const s = $('symInput').value.trim().toUpperCase();
+    const err = $('addErr');
+    if (!/^[A-Z0-9]{5,20}$/.test(s)) { err.textContent = 'نماد معتبر نیست. فقط حرف و عدد انگلیسی بنویس.'; return; }
+    if (symbols.includes(s)) { err.textContent = 'این نماد قبلاً در لیست هست.'; return; }
+    err.textContent = 'در حال بررسی…';
+    try {
+      const r = await fetch(`${REST}/ticker/price?symbol=${s}`);
+      if (!r.ok) { err.textContent = 'این نماد در Binance پیدا نشد.'; return; }
+    } catch {
+      err.textContent = 'اتصال به Binance برقرار نشد. اینترنت یا VPN را چک کن.';
+      return;
+    }
+    symbols.push(s);
+    store.set('symbols', symbols);
+    dlg.close();
+    renderList();
+    openTickers();
+    select(s);
+  }
+  $('confirm').addEventListener('click', confirmAdd);
+  $('symInput').addEventListener('keydown', e => { if (e.key === 'Enter') confirmAdd(); });
+
+  // ---------- data: candles + live updates ----------
+  let loadToken = 0;
+  let sock = null;
+
+  function closeSock(){
+    if (sock){ const s = sock; sock = null; s.close(); }
+  }
+
+  async function loadChart(){
+    const token = ++loadToken;
+    closeSock();
+    setStatus('در حال بارگذاری…');
+    try {
+      const r = await fetch(`${REST}/klines?symbol=${current}&interval=${tf}&limit=500`);
+      if (!r.ok) throw new Error('HTTP ' + r.status);
+      const rows = await r.json();
+      if (token !== loadToken) return;
+
+      const off = tzOffset();
+      const cs = [], vs = [];
+      for (const k of rows){
+        const time = Math.floor(k[0] / 1000) + off;
+        const o = +k[1], h = +k[2], l = +k[3], c = +k[4];
+        cs.push({ time, open: o, high: h, low: l, close: c });
+        vs.push({ time, value: +k[5], color: c >= o ? C.upVol : C.downVol });
+      }
+      const lastClose = cs.length ? cs[cs.length - 1].close : 1;
+      const d = digitsFor(lastClose);
+      candles.applyOptions({ priceFormat: { type: 'price', precision: d, minMove: Math.pow(10, -d) } });
+      candles.setData(cs);
+      volume.setData(vs);
+      chart.timeScale().fitContent();
+      last[current] = lastClose;
+      renderPrice();
+      updateItem(current);
+      openKline(token);
+    } catch (e) {
+      if (token !== loadToken) return;
+      setStatus('دریافت اطلاعات ناموفق بود', 'err');
+      setTimeout(() => { if (token === loadToken) loadChart(); }, 5000);
+    }
+  }
+
+  function openKline(token){
+    const ws = new WebSocket(`${WS}/ws/${current.toLowerCase()}@kline_${tf}`);
+    sock = ws;
+    ws.onopen = () => { if (sock === ws) setStatus('زنده', 'live'); };
+    ws.onmessage = e => {
+      if (sock !== ws) return;
+      const k = JSON.parse(e.data).k;
+      if (!k) return;
+      const time = Math.floor(k.t / 1000) + tzOffset();
+      const o = +k.o, c = +k.c;
+      candles.update({ time, open: o, high: +k.h, low: +k.l, close: c });
+      volume.update({ time, value: +k.v, color: c >= o ? C.upVol : C.downVol });
+      last[current] = c;
+      renderPrice();
+      updateItem(current);
+    };
+    ws.onclose = () => {
+      if (sock !== ws) return;
+      setStatus('اتصال قطع شد. تلاش دوباره…', 'err');
+      setTimeout(() => { if (sock === ws && token === loadToken) openKline(token); }, 3000);
+    };
+  }
+
+  // ---------- data: watchlist prices ----------
+  let tsock = null;
+  function openTickers(){
+    if (tsock){ const o = tsock; tsock = null; o.close(); }
+    if (!symbols.length) return;
+    const streams = symbols.map(s => s.toLowerCase() + '@miniTicker').join('/');
+    const ws = new WebSocket(`${WS}/stream?streams=${streams}`);
+    tsock = ws;
+    ws.onmessage = e => {
+      const d = JSON.parse(e.data).data;
+      if (!d || !d.s) return;
+      const o = +d.o, c = +d.c;
+      last[d.s] = c;
+      chg[d.s] = o ? ((c - o) / o) * 100 : 0;
+      updateItem(d.s);
+      if (d.s === current) renderPrice();
+    };
+    ws.onclose = () => {
+      if (tsock === ws) setTimeout(() => { if (tsock === ws) openTickers(); }, 3000);
+    };
+  }
+
+  // ---------- start ----------
+  renderList();
+  renderTfs();
+  renderHeader();
+  openTickers();
+  loadChart();
+})();
+</script>
+</body>
+</html>
